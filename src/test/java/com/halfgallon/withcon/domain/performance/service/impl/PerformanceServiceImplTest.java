@@ -1,14 +1,13 @@
 package com.halfgallon.withcon.domain.performance.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.halfgallon.withcon.domain.performance.constant.Genre;
 import com.halfgallon.withcon.domain.performance.constant.Status;
 import com.halfgallon.withcon.domain.performance.dto.request.PerformanceRequest;
 import com.halfgallon.withcon.domain.performance.dto.response.PerformanceResponse;
@@ -25,6 +24,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class PerformanceServiceImplTest {
@@ -86,7 +88,8 @@ class PerformanceServiceImplTest {
         () -> performanceService.findPerformance(id));
 
     // then
-    assertThat(ErrorCode.PERFORMANCE_NOT_FOUND.getDescription()).isEqualTo(customException.getMessage());
+    assertThat(ErrorCode.PERFORMANCE_NOT_FOUND.getDescription()).isEqualTo(
+        customException.getMessage());
   }
 
   @Test
@@ -128,25 +131,64 @@ class PerformanceServiceImplTest {
     verify(performanceRepository, times(1)).deleteById(id);
   }
 
-  private static PerformanceRequest getPerformanceRequest() {
+  @Test
+  @DisplayName("공연 검색 완료 - 장르가 ALL인 경우")
+  void searchPerformance_Keyword_Success() {
+    //given
+    PerformanceRequest request = getPerformanceRequest();
+    String keyword = "keyword";
+    Genre genre = Genre.ALL;
+    Pageable pageable = PageRequest.of(0, 10);
+    Page<Performance> expectedResponse = Page.empty(pageable);
+
+    given(performanceRepository.searchByKeyword(keyword, pageable)).willReturn(expectedResponse);
+
+    Page<PerformanceResponse> actualResponse = performanceService.searchPerformance(keyword, genre,
+        pageable);
+
+    assertThat(actualResponse.getTotalElements()).isEqualTo(expectedResponse.getTotalElements());
+    assertThat(actualResponse.getTotalPages()).isEqualTo(expectedResponse.getTotalPages());
+    assertThat(actualResponse.getContent().size()).isEqualTo(expectedResponse.getContent().size());
+  }
+
+  @Test
+  @DisplayName("공연 검색 완료 - 장르가 ALL이 아닌 경우")
+  void searchPerformance_KeywordAndGenre_Success() {
+    PerformanceRequest request = getPerformanceRequest();
+    String keyword = "keyword";
+    Genre genre = Genre.MUSICAL;
+    Pageable pageable = PageRequest.of(0, 10);
+    Page<Performance> expectedResponse = Page.empty(pageable);
+
+    given(performanceRepository.searchByKeywordAndGenre(keyword, genre, pageable)).willReturn(
+        expectedResponse);
+
+    Page<PerformanceResponse> actualResponse = performanceService.searchPerformance(keyword, genre,
+        pageable);
+
+    assertThat(actualResponse.getTotalElements()).isEqualTo(expectedResponse.getTotalElements());
+    assertThat(actualResponse.getTotalPages()).isEqualTo(expectedResponse.getTotalPages());
+    assertThat(actualResponse.getContent().size()).isEqualTo(expectedResponse.getContent().size());
+  }
+
+  private PerformanceRequest getPerformanceRequest() {
     return PerformanceRequest.builder()
         .id("id")
         .name("name")
-        .startDate(LocalDate.ofEpochDay(2024-02-18))
-        .endDate(LocalDate.ofEpochDay(2024-02-20))
+        .startDate(LocalDate.ofEpochDay(2024 - 02 - 18))
+        .endDate(LocalDate.ofEpochDay(2024 - 02 - 20))
         .poster("asdfler")
         .facility("공연 장소")
         .status(Status.RUNNING)
-        .likes(4000L)
         .build();
   }
 
-  private static PerformanceResponse getPerformanceResponse() {
+  private PerformanceResponse getPerformanceResponse() {
     return PerformanceResponse.builder()
         .id("id")
         .name("name")
-        .startDate(LocalDate.ofEpochDay(2024-02-18))
-        .endDate(LocalDate.ofEpochDay(2024-02-20))
+        .startDate(LocalDate.ofEpochDay(2024 - 02 - 18))
+        .endDate(LocalDate.ofEpochDay(2024 - 02 - 20))
         .poster("asdfler")
         .facility("공연 장소")
         .status(Status.RUNNING)
