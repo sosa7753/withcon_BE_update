@@ -9,10 +9,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 public interface NotificationService {
 
-  SseEmitter subscribe(Long memberId, String lastEventId);
+  SseEmitter subscribe(Long memberId);
 
   List<NotificationResponse> findNotification(Long memberId);
 
   void createNotificationChatRoom(ChatRoomNotificationRequest request);
+
+  void readNotification(Long notificationId);
 
 }

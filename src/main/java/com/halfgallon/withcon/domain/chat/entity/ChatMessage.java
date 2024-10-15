@@ -11,13 +11,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
 
 @Entity
 @Getter
@@ -30,8 +28,8 @@ public class ChatMessage {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "room_id")
-  private ChatRoom room;
+  @JoinColumn(name = "chatRoom_id")
+  private ChatRoom chatRoom;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "chatParticipant_id")
@@ -43,12 +41,11 @@ public class ChatMessage {
   @Enumerated(value = EnumType.STRING)
   private MessageType messageType;
 
-  @CreatedDate
-  @Column(updatable = false)
-  private LocalDateTime sendAt;
+  @Column(nullable = false)
+  private Long sendAt;
 
   public void updateChatRoom(ChatRoom chatRoom) {
-    this.room = chatRoom;
+    this.chatRoom = chatRoom;
   }
 
   public void updateChatParticipant(ChatParticipant chatParticipant) {

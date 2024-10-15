@@ -1,6 +1,7 @@
 package com.halfgallon.withcon.domain.member.controller;
 
 import com.halfgallon.withcon.domain.auth.security.service.CustomUserDetails;
+import com.halfgallon.withcon.domain.member.dto.request.CurrentPasswordCheckRequest;
 import com.halfgallon.withcon.domain.member.dto.request.UpdateMemberRequest;
 import com.halfgallon.withcon.domain.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +33,14 @@ public class MemberController {
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @RequestBody UpdateMemberRequest updateMemberRequest) {
     memberService.updateMember(userDetails.getId(), updateMemberRequest);
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/current-password-check")
+  public ResponseEntity<Void> currentPasswordCheck(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @RequestBody CurrentPasswordCheckRequest request) {
+    memberService.currentPasswordCheck(userDetails.getId(), request.password());
     return ResponseEntity.ok().build();
   }
 

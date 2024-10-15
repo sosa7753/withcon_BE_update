@@ -6,7 +6,6 @@ import com.halfgallon.withcon.domain.chat.constant.ChattingConstant;
 import com.halfgallon.withcon.domain.chat.dto.ChatMessageDto;
 import com.halfgallon.withcon.domain.chat.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -14,7 +13,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.web.bind.annotation.RestController;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class ChatMessageController {
@@ -24,8 +22,8 @@ public class ChatMessageController {
 
   @MessageMapping("/chat/message/{roomId}")
   public void sendMessage(@Payload ChatMessageDto chatDto, @DestinationVariable("roomId") Long roomId) {
-    ChatMessageDto chatMessageDto = chatMessageService.chatMessage(chatDto, roomId);
-    rabbitTemplate.convertAndSend(CHAT_EXCHANGE_NAME, "room." + roomId, chatMessageDto);
+    rabbitTemplate.convertAndSend(CHAT_EXCHANGE_NAME, "room." + roomId,
+        chatMessageService.chatMessage(chatDto, roomId));
   }
 
   @MessageMapping("/chat/enter/{roomId}")
@@ -50,7 +48,6 @@ public class ChatMessageController {
   @RabbitListener(queues = ChattingConstant.CHAT_QUEUE_NAME)
   public void receive(ChatMessageDto response) {
     chatMessageService.saveChatMessage(response);
-    log.info("ChatMessageDto.getMessage() : {}", response.getMessage());
   }
 
 }

@@ -5,12 +5,13 @@ import java.util.List;
 
 public record ChatRoomRequest(
     String roomName,
-    Long performanceId,
+    String performanceId,
     List<String> tags
 ) {
-  public ChatRoom toEntity() {
+  public ChatRoom toEntity(Long userId) {
     return ChatRoom.builder()
         .name(this.roomName)
+        .managerId(userId)
         .build();
   }
 }

@@ -1,16 +1,17 @@
 package com.halfgallon.withcon.domain.chat.service.impl;
 
 import static com.halfgallon.withcon.domain.chat.constant.ChattingConstant.CHAT_MESSAGE_PAGE_SIZE;
+import static com.halfgallon.withcon.domain.chat.constant.EnterStatus.ALREADY;
+import static com.halfgallon.withcon.domain.chat.constant.EnterStatus.NEW;
 import static com.halfgallon.withcon.global.exception.ErrorCode.CHATROOM_NOT_FOUND;
-import static com.halfgallon.withcon.global.exception.ErrorCode.DUPLICATE_CHATROOM;
+import static com.halfgallon.withcon.global.exception.ErrorCode.DUPLICATE_CHATROOM_NAME;
 import static com.halfgallon.withcon.global.exception.ErrorCode.MEMBER_NOT_FOUND;
 import static com.halfgallon.withcon.global.exception.ErrorCode.PARTICIPANT_NOT_FOUND;
 import static com.halfgallon.withcon.global.exception.ErrorCode.PERFORMANCE_NOT_FOUND;
-import static com.halfgallon.withcon.global.exception.ErrorCode.USER_JUST_ONE_CREATE_CHATROOM;
 
 import com.halfgallon.withcon.domain.auth.security.service.CustomUserDetails;
-import com.halfgallon.withcon.domain.chat.dto.ChatMessageDto;
-import com.halfgallon.withcon.domain.chat.dto.ChatMessageRequest;
+import com.halfgallon.withcon.domain.chat.dto.ChatLastMessageRequest;
+import com.halfgallon.withcon.domain.chat.dto.ChatMessageResponse;
 import com.halfgallon.withcon.domain.chat.dto.ChatParticipantDto;
 import com.halfgallon.withcon.domain.chat.dto.ChatRoomEnterResponse;
 import com.halfgallon.withcon.domain.chat.dto.ChatRoomRequest;
@@ -24,14 +25,13 @@ import com.halfgallon.withcon.domain.chat.repository.ChatRoomRepository;
 import com.halfgallon.withcon.domain.chat.service.ChatRoomService;
 import com.halfgallon.withcon.domain.member.entity.Member;
 import com.halfgallon.withcon.domain.member.repository.MemberRepository;
+import com.halfgallon.withcon.domain.performance.dto.response.PerformanceResponse;
+import com.halfgallon.withcon.domain.performance.entitiy.Performance;
 import com.halfgallon.withcon.domain.performance.repository.PerformanceRepository;
-import com.halfgallon.withcon.domain.tag.entity.Tag;
-import com.halfgallon.withcon.domain.tag.entity.TagSearch;
-import com.halfgallon.withcon.domain.tag.repository.TagRepository;
-import com.halfgallon.withcon.domain.tag.repository.TagSearchRepository;
 import com.halfgallon.withcon.global.exception.CustomException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatRoomServiceImpl implements ChatRoomService {
@@ -46,9 +47,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
   private final ChatRoomRepository chatRoomRepository;
   private final ChatParticipantRepository participantRepository;
   private final MemberRepository memberRepository;
-  private final TagRepository tagRepository;
   private final ChatMessageRepository chatMessageRepository;
-  private final TagSearchRepository tagSearchRepository;
   private final PerformanceRepository performanceRepository;
 
   @Override
@@ -56,81 +55,53 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     Member member = memberRepository.findById(customUserDetails.getId())
         .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
-    validationCreateChatroom(request, member.getId());
-
-    ChatRoom chatRoom = chatRoomRepository.save(request.toEntity());
-
     //채팅방 생성 시에 공연 정보 추가
-    chatRoom.updatePerformance(performanceRepository.findById(String.valueOf(request.performanceId()))
-        .orElseThrow(() -> new CustomException(PERFORMANCE_NOT_FOUND)));
+    Performance performance = performanceRepository.findById(request.performanceId())
+        .orElseThrow(() -> new CustomException(PERFORMANCE_NOT_FOUND));
+
+    //동일한 공연에 동일 채팅방 이름은 사용 불가
+    if (chatRoomRepository.existsByNameAndPerformance_Id(request.roomName(), performance.getId())) {
+      throw new CustomException(DUPLICATE_CHATROOM_NAME);
+    }
+
+    //채팅방 데이터 저장
+    ChatRoom chatRoom = chatRoomRepository.save(getChatRoom(request, member, performance));
+
+    log.info("공연 정보 설정 완료");
 
     //채팅방 참여 인원 저장
     chatRoom.addChatParticipant(participantRepository.save(
         ChatParticipant.builder()
             .chatRoom(chatRoom)
             .member(member)
-            .isManager(true)
             .build()));
 
-    //태그가 있는 경우에만 - 해당 태그 저장
-    if (!CollectionUtils.isEmpty(request.tags())) {
-      List<Tag> tagList = request.tags()
-          .stream()
-          .map(t -> Tag.builder()
-              .name(t)
-              .chatRoom(chatRoom)
-              .build())
-          .toList();
-
-      tagRepository.saveAll(tagList);
-
-      for (Tag tag : tagList) {
-        chatRoom.addTag(tag);
-      }
-
-      //태그 기록(ElasticSearch 저장)
-      upsertTagSearch(tagList);
-    }
+    log.info("채팅방 참여자 정보 설정 완료");
 
     return ChatRoomResponse.fromEntity(chatRoom);
   }
 
-  private void upsertTagSearch(List<Tag> tagList) {
-    List<TagSearch> searches = tagList.stream()
-        .map(tag -> {
-          TagSearch tagSearch = tagSearchRepository.findByName(tag.getName()).orElse(null);
-
-          if (tagSearch == null) {
-            return TagSearch.builder()
-              .id(tag.getId().toString())
-              .name(tag.getName())
-              .tagCount(1)
-              .build();
-          } else {
-            Integer count = tagRepository.countTagByName(tag.getName());
-            tagSearchRepository.updateTagCount(tagSearch.getId(), tag.getName(), count);
-
-            return TagSearch.builder()
-                .id(tag.getId().toString())
-                .name(tag.getName())
-                .tagCount(count)
-                .build();
-          }
-        }).toList();
-
-    tagSearchRepository.saveAll(searches);
+  private static ChatRoom getChatRoom(ChatRoomRequest request,
+      Member member, Performance performance) {
+    return ChatRoom.builder()
+        .name(request.roomName())
+        .managerId(member.getId())
+        .performance(performance)
+        .build();
   }
-
 
   @Override
   @Transactional(readOnly = true)
   public Page<ChatRoomResponse> findChatRoom(String performanceId, Pageable pageable) {
-    return chatRoomRepository.findAllByPerformance_Id(performanceId, pageable).map(ChatRoomResponse::fromEntity);
+    return chatRoomRepository.findAllByPerformance_Id(performanceId, pageable)
+        .map(ChatRoomResponse::fromEntity);
   }
 
   @Override
   @Transactional
   public ChatRoomEnterResponse enterChatRoom(CustomUserDetails customUserDetails, Long chatRoomId) {
+    boolean isEnter = false; //입장 여부 체크 : 첫 입장: true, 재입장: false
+
     Member member = memberRepository.findById(customUserDetails.getId())
         .orElseThrow(() -> new CustomException(MEMBER_NOT_FOUND));
 
@@ -138,15 +109,15 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         .orElseThrow(() -> new CustomException(CHATROOM_NOT_FOUND));
 
     //채팅방 참여 인원 저장(첫 방문인 경우 데이터 저장)
-    participantRepository.findByMemberIdAndChatRoomId(customUserDetails.getId(), chatRoomId)
-        .ifPresentOrElse(
-            participant -> {},
-            () -> chatRoom.addChatParticipant(participantRepository.save(
-                ChatParticipant.builder()
-                    .chatRoom(chatRoom)
-                    .member(member)
-                    .build()))
-        );
+    if (!participantRepository.existsByMemberIdAndChatRoomId(customUserDetails.getId(), chatRoomId)) {
+      chatRoom.addChatParticipant(participantRepository.save(
+          ChatParticipant.builder()
+              .chatRoom(chatRoom)
+              .member(member)
+              .build()));
+
+      isEnter = true;
+    }
 
     //채팅방 참여하고 있는 인원 리스트
     List<ChatParticipantDto> chatParticipants = chatRoom.getChatParticipants()
@@ -156,70 +127,70 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     return ChatRoomEnterResponse.builder()
         .roomName(chatRoom.getName())
         .chatRoomId(chatRoomId)
+        .managerId(chatRoom.getManagerId())
         .userCount(chatRoom.getUserCount())
         .chatParticipants(chatParticipants)
-        .performanceId(Long.valueOf(chatRoom.getPerformance().getId()))
+        .performanceName(PerformanceResponse.fromEntity(chatRoom.getPerformance()).getName())
+        .enterStatus(isEnter ? NEW : ALREADY)
         .build();
   }
 
   @Override
   @Transactional
   public void exitChatRoom(CustomUserDetails customUserDetails, Long chatRoomId) {
-    ChatParticipant participant
-        = participantRepository.findByMemberIdAndChatRoomId(customUserDetails.getId(), chatRoomId)
-        .orElseThrow(() -> new CustomException(PARTICIPANT_NOT_FOUND));
+    ChatParticipant participant = findChatParticipantOrThrow(chatRoomId, customUserDetails.getId());
 
-    participantRepository.delete(participant);
-    participant.getChatRoom().removeChatParticipant(participant);
+    deleteChattingData(chatRoomId, participant);
+
+    ChatRoomResponse response = ChatRoomResponse.fromEntity(participant.getChatRoom());
 
     //채팅방 인원이 전부 나간 경우 or 채팅방 방장이 방을 없앤 경우
-    if (participant.getChatRoom().getUserCount() <= 0 || participant.isManager()) {
+    if (response.userCount() <= 0 || response.managerId().equals(customUserDetails.getId())) {
       chatRoomRepository.delete(participant.getChatRoom());
     }
   }
 
   @Override
   @Transactional(readOnly = true)
-  public Slice<ChatMessageDto> findAllMessageChatRoom(CustomUserDetails customUserDetails,
-      ChatMessageRequest request, Long chatRoomId) {
-
-    participantRepository.findByMemberIdAndChatRoomId(customUserDetails.getId(), chatRoomId)
-        .orElseThrow(() -> new CustomException(PARTICIPANT_NOT_FOUND));
+  public Slice<ChatMessageResponse> findAllMessageChatRoom(CustomUserDetails customUserDetails,
+      ChatLastMessageRequest request, Long chatRoomId) {
 
     Slice<ChatMessage> message = chatMessageRepository.findChatRoomMessage(
-        request.lastMsgId(), chatRoomId, Pageable.ofSize(CHAT_MESSAGE_PAGE_SIZE));
+        request.lastMsgId(), chatRoomId,
+        Pageable.ofSize(request.limit() != 0 ? request.limit() : CHAT_MESSAGE_PAGE_SIZE));
 
-    return message.map(ChatMessageDto::fromEntity);
+    return message.map(ChatMessageResponse::fromEntity);
   }
 
   @Override
   @Transactional
   public ChatRoomResponse kickChatRoom(CustomUserDetails customUserDetails, Long chatRoomId,
       Long memberId) {
-    ChatParticipant chatParticipant = participantRepository.findByMemberIdAndChatRoomId(
-            memberId, chatRoomId)
-        .orElseThrow(() -> new CustomException(PARTICIPANT_NOT_FOUND));
+    //현재 채팅방에서 강퇴할 인원 참여 여부 체크
+    ChatParticipant chatParticipant = findChatParticipantOrThrow(chatRoomId, memberId);
 
-    if (participantRepository.checkRoomManager(customUserDetails.getId())) {
-      participantRepository.delete(chatParticipant);
-      chatParticipant.getChatRoom().removeChatParticipant(chatParticipant);
+    if (participantRepository.checkRoomManagerId(customUserDetails.getId())) {
+      deleteChattingData(chatRoomId, chatParticipant);
     }
 
     return ChatRoomResponse.fromEntity(chatParticipant.getChatRoom());
   }
 
-  /**
-   * 채팅방 생성 유효성 검사
-   */
-  private void validationCreateChatroom(ChatRoomRequest request, Long memberId) {
-    //채팅방 이름 검사
-    if (chatRoomRepository.existsByName(request.roomName())) {
-      throw new CustomException(DUPLICATE_CHATROOM);
+  private ChatParticipant findChatParticipantOrThrow(Long chatRoomId, Long memberId) {
+    return participantRepository.findByMemberIdAndChatRoomId(memberId, chatRoomId)
+        .orElseThrow(() -> new CustomException(PARTICIPANT_NOT_FOUND));
+  }
+
+  private void deleteChattingData(Long chatRoomId, ChatParticipant chatParticipant) {
+    List<ChatMessage> messages = chatMessageRepository.findAllByChatRoomIdAndChatParticipantId(
+        chatRoomId, chatParticipant.getId());
+
+    if (!CollectionUtils.isEmpty(messages)) {
+      chatMessageRepository.deleteAll(messages);
     }
-    //채팅방은 1인당 1개만 생성이 가능하다.
-    if (participantRepository.checkRoomManager(memberId)) {
-      throw new CustomException(USER_JUST_ONE_CREATE_CHATROOM);
-    }
+
+    participantRepository.delete(chatParticipant);
+    chatParticipant.getChatRoom().removeChatParticipant(chatParticipant);
   }
 
 }

@@ -2,30 +2,23 @@ package com.halfgallon.withcon.domain.notification.event.handler;
 
 import com.halfgallon.withcon.domain.member.entity.Member;
 import com.halfgallon.withcon.domain.member.repository.MemberRepository;
-import com.halfgallon.withcon.domain.notification.constant.Channel;
 import com.halfgallon.withcon.domain.notification.constant.NotificationMessage;
 import com.halfgallon.withcon.domain.notification.constant.NotificationType;
 import com.halfgallon.withcon.domain.notification.constant.RedisCacheType;
 import com.halfgallon.withcon.domain.notification.constant.VisibleType;
 import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
-import com.halfgallon.withcon.domain.notification.dto.VisibleDataDto;
 import com.halfgallon.withcon.domain.notification.entity.Notification;
 import com.halfgallon.withcon.domain.notification.event.NewMessageEvent;
 import com.halfgallon.withcon.domain.notification.repository.NotificationRepository;
-import com.halfgallon.withcon.domain.notification.service.RedisCacheService;
+import com.halfgallon.withcon.domain.notification.service.RedisService;
 import com.halfgallon.withcon.domain.notification.service.RedisNotificationService;
-import com.halfgallon.withcon.global.exception.CustomException;
-import com.halfgallon.withcon.global.exception.ErrorCode;
 import java.time.LocalDateTime;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -33,41 +26,36 @@ import org.springframework.transaction.annotation.Transactional;
 public class NewMessageEventHandler {
 
   private final RedisNotificationService redisNotificationService;
-  private final RedisCacheService redisCacheService;
+  private final RedisService redisService;
   private final MemberRepository memberRepository;
   private final NotificationRepository notificationRepository;
 
   @Async
   @EventListener
-  @Transactional
   public void handleNewMessageEvent(NewMessageEvent event) {
     String visibleKey = RedisCacheType.VISIBLE_CACHE.getDescription()
-        + Channel.makeChannel(event.getPerformanceId(), event.getChatRoomId());
+        + event.getChatRoomId();
     log.info("Event Handle : 채널 KEY: " + visibleKey);
 
-    Map<Object, Object> cache = redisCacheService.getHashByKey(visibleKey);
+    Map<Object, Object> cache = redisService.getHashByKey(visibleKey);
     log.info("Event : Visible 캐시 데이터 조회" + cache);
 
-    if(!cache.isEmpty()) { // 기존 캐시 값이 존재 한다면
-      Iterator<Entry<Object, Object>> iterator = cache.entrySet().iterator();
+    if(cache != null) { // 기존 캐시 Map이 존재 한다면
+      for(Map.Entry<Object, Object> entry : cache.entrySet()) {
+        VisibleType visibleType = VisibleType.valueOf((String)entry.getValue());
 
-      while (iterator.hasNext()) {
-        Map.Entry<Object, Object> entry = iterator.next();
-        VisibleDataDto visibleDataDto = (VisibleDataDto) entry.getValue();
-
-        if (visibleDataDto.getVisibleType() == VisibleType.HIDDEN) {
-          Member member = memberRepository.findById(Long.parseLong((String)entry.getKey()))
-              .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-          newMessageSaveAndPublish(event, member, visibleKey);
-
-          iterator.remove();
-          log.info("캐시 데이터 삭제: " + entry.getKey());
+        if(visibleType == VisibleType.HIDDEN) {
+          memberRepository.findById(Long.parseLong((String)entry.getKey()))
+              .ifPresent(member -> {
+                newMessageSaveAndPublish(event, member);
+                cache.put(entry.getKey(), VisibleType.NONE);
+              });
         }
       }
+      redisService.saveToHash(visibleKey, cache, 24);
     }
   }
-  private void newMessageSaveAndPublish(NewMessageEvent event, Member member, String visibleKey) {
+  private void newMessageSaveAndPublish(NewMessageEvent event, Member member) {
     Notification notification = Notification.builder()
         .message(createNewMessageNotification())
         .url(createNewMessageUrl(event.getChatRoomId()))
@@ -79,7 +67,7 @@ public class NewMessageEventHandler {
     notificationRepository.save(notification);
     log.info("Event : 알림 저장 성공 ");
 
-    redisNotificationService.publish(visibleKey, new NotificationResponse(notification));
+    redisNotificationService.publish(String.valueOf(member.getId()), new NotificationResponse(notification));
     log.info("Event : 메세지 발행 ");
   }
 

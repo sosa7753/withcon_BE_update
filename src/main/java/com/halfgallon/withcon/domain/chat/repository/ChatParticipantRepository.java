@@ -11,6 +11,10 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
     CustomChatParticipantRepository {
   Optional<ChatParticipant> findByMemberIdAndChatRoomId(Long memberId, Long roomId);
 
+  boolean existsByMemberIdAndChatRoomId(Long memberId, Long roomId);
+
   List<ChatParticipant> findAllByChatRoom_Id(Long chatRoomId);
+
+  Optional<ChatParticipant> findByMember_Id(Long memberId);
 
 }

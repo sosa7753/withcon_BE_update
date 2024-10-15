@@ -1,13 +1,21 @@
 package com.halfgallon.withcon.domain.performance.service.impl;
 
+import com.halfgallon.withcon.domain.performance.constant.Genre;
 import com.halfgallon.withcon.domain.performance.dto.request.PerformanceRequest;
 import com.halfgallon.withcon.domain.performance.dto.response.PerformanceResponse;
 import com.halfgallon.withcon.domain.performance.entitiy.Performance;
+import com.halfgallon.withcon.domain.performance.repository.PerformanceLikeRepository;
 import com.halfgallon.withcon.domain.performance.repository.PerformanceRepository;
 import com.halfgallon.withcon.domain.performance.service.PerformanceService;
 import com.halfgallon.withcon.global.exception.CustomException;
 import com.halfgallon.withcon.global.exception.ErrorCode;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PerformanceServiceImpl implements PerformanceService {
 
   private final PerformanceRepository performanceRepository;
+  private final JPAQueryFactory jpaQueryFactory;
 
   @Override
   @Transactional
@@ -51,4 +60,30 @@ public class PerformanceServiceImpl implements PerformanceService {
 
     return PerformanceResponse.fromEntity(performance);
   }
+
+  @Override
+  public Page<PerformanceResponse> searchPerformance(String keyword, Genre genre,
+      Pageable pageable) {
+    Page<Performance> performancePage;
+
+    if(keyword == null) {
+      keyword = "";
+    }
+
+    if (genre.equals(Genre.ALL)) {
+      performancePage = performanceRepository.searchByKeyword(keyword,
+          pageable);
+    } else {
+        performancePage = performanceRepository.searchByKeywordAndGenre(keyword, genre,
+            pageable);
+    }
+
+    List<PerformanceResponse> performanceResponseList = performancePage.getContent()
+        .stream()
+        .map(PerformanceResponse::fromEntity)
+        .collect(Collectors.toList());
+
+    return new PageImpl<>(performanceResponseList, pageable, performancePage.getTotalElements());
+  }
+
 }

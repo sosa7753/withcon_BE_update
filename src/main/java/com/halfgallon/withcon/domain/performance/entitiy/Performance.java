@@ -13,7 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -56,8 +56,9 @@ public class Performance extends BaseTimeEntity {
   @OneToMany(mappedBy = "performance", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ChatRoom> chatRoom;
 
-  @OneToMany(mappedBy = "performance")
-  private List<PerformanceLike> performanceLikes;
+  @OneToMany(mappedBy = "performance", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Builder.Default
+  private List<PerformanceLike> performanceLikes = new ArrayList<>();
 
   @OneToOne(mappedBy = "performance", cascade = CascadeType.ALL, orphanRemoval = true)
   private PerformanceDetail performanceDetail;
@@ -70,5 +71,13 @@ public class Performance extends BaseTimeEntity {
     this.poster = request.getPoster();
     this.facility = request.getFacility();
     this.status = request.getStatus();
+  }
+
+  public void addLikes() {
+    this.likes = this.likes + 1L;
+  }
+
+  public void subLikes() {
+    this.likes = this.likes -1L;
   }
 }

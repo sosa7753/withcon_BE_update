@@ -15,13 +15,14 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class NotificationResponse implements Serializable {
+
+  private Long notificationId;
+
   private Long memberId;
 
   private String message;
 
   private String url;
-
-  private boolean readStatus;
 
   @JsonProperty("createdAt")
   @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -30,10 +31,10 @@ public class NotificationResponse implements Serializable {
   private LocalDateTime createdAt;
 
   public NotificationResponse(Notification notification) {
+    this.notificationId = notification.getId();
     this.memberId = notification.getMember().getId();
     this.message = notification.getMessage();
     this.url = notification.getUrl();
-    this.readStatus = notification.isReadStatus();
     this.createdAt = notification.getCreatedAt();
   }
 }

@@ -2,7 +2,6 @@ package com.halfgallon.withcon.global.exception;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.CONTINUE;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -24,6 +23,7 @@ public enum ErrorCode {
   CONTENT_TYPE_NOT_SUPPORTED(BAD_REQUEST.value(), "잘못된 Content-type 요청입니다."),
   LOGIN_FAILURE_MESSAGE(BAD_REQUEST.value(), "아이디 혹은 비밀번호가 올바르지 않습니다."),
   OAUTH2_LOGIN_FAILURE_MESSAGE(BAD_REQUEST.value(), "소셜 로그인에 실패하셨습니다."),
+  CURRENT_PASSWORD_MISMATCH(BAD_REQUEST.value(), "현재 비밀번호와 일치하지 않습니다."),
 
   /**
    * 401 Unauthorized
@@ -41,13 +41,18 @@ public enum ErrorCode {
   CHATROOM_NOT_FOUND(NOT_FOUND.value(), "채팅방이 생성되지 않았습니다."),
   PARTICIPANT_NOT_FOUND(NOT_FOUND.value(), "해당 채팅방 참여자가 아닙니다."),
   PERFORMANCE_NOT_FOUND(NOT_FOUND.value(), "존재하지 않는 공연입니다."),
+  NOT_EXIST_LIKE(NOT_FOUND.value(), "찜이 존재하지 않습니다."),
+  NOT_EXIST_NOTIFICATION(NOT_FOUND.value(), "알림이 존재하지 않습니다."),
+  GENRE_NOT_FOUND(NOT_FOUND.value(), "존재하지 않는 장르입니다."),
+  PERFORMANCE_DETAIL_NOT_FOUND(NOT_FOUND.value(), "존재하지 않는 공연 세부 정보입니다."),
 
   /**
    * 409 conflict
    */
-  DUPLICATE_CHATROOM(CONFLICT.value(), "이미 존재하는 채팅방입니다."),
+  DUPLICATE_CHATROOM_NAME(CONFLICT.value(), "이미 사용하는 채팅방 이름입니다."),
   DUPLICATE_USERNAME(CONFLICT.value(), "이미 사용하고 있는 ID 입니다."),
   DUPLICATE_PHONE_NUMBER(CONFLICT.value(), "이미 사용하고 있는 핸드폰 번호입니다."),
+  ALREADY_LIKE_EXIST(CONFLICT.value(), "이미 찜한 공연입니다."),
 
   /**
    * 500 Internal Server Error
