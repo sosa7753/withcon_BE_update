@@ -10,7 +10,6 @@ public record MemberMyInfoResponse(
     String username,
     String nickname,
     String phoneNumber,
-    String profileImage,
     LoginType loginType
 ) {
 
@@ -20,7 +19,6 @@ public record MemberMyInfoResponse(
         .username(member.getUsername())
         .nickname(member.getNickname())
         .phoneNumber(member.getPhoneNumber())
-        .profileImage(member.getProfileImage())
         .loginType(member.getLoginType())
         .build();
   }

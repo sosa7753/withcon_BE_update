@@ -8,7 +8,6 @@ import lombok.Builder;
 public record ChatParticipantDto(
     Long memberId,
     String password,
-    String userProfile,
     LoginType loginType,
     String nickName,
     String phoneNumber
@@ -18,7 +17,6 @@ public record ChatParticipantDto(
     return ChatParticipantDto.builder()
         .memberId(chatParticipant.getMember().getId())
         .password(chatParticipant.getMember().getPassword())
-        .userProfile(chatParticipant.getMember().getProfileImage())
         .loginType(chatParticipant.getMember().getLoginType())
         .nickName(chatParticipant.getMember().getNickname())
         .phoneNumber(chatParticipant.getMember().getPhoneNumber())
