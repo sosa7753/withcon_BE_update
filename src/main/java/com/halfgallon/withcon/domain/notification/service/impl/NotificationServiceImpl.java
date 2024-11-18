@@ -1,8 +1,14 @@
 package com.halfgallon.withcon.domain.notification.service.impl;
 
-import static com.halfgallon.withcon.domain.chat.constant.MessageType.*;
-import static com.halfgallon.withcon.domain.notification.constant.NotificationMessage.*;
-import static com.halfgallon.withcon.global.exception.ErrorCode.*;
+import static com.halfgallon.withcon.domain.chat.constant.MessageType.ENTER;
+import static com.halfgallon.withcon.domain.chat.constant.MessageType.EXIT;
+import static com.halfgallon.withcon.domain.chat.constant.MessageType.KICK;
+import static com.halfgallon.withcon.domain.notification.constant.NotificationMessage.ENTER_CHATROOM;
+import static com.halfgallon.withcon.domain.notification.constant.NotificationMessage.EXIT_CHATROOM;
+import static com.halfgallon.withcon.domain.notification.constant.NotificationMessage.KICK_CHATROOM;
+import static com.halfgallon.withcon.domain.notification.constant.NotificationMessage.SUBSCRIBE;
+import static com.halfgallon.withcon.global.exception.ErrorCode.INVALID_PARAMETER;
+import static com.halfgallon.withcon.global.exception.ErrorCode.NOT_EXIST_NOTIFICATION;
 
 import com.halfgallon.withcon.domain.chat.constant.MessageType;
 import com.halfgallon.withcon.domain.chat.entity.ChatParticipant;
@@ -19,11 +25,10 @@ import com.halfgallon.withcon.domain.notification.entity.Notification;
 import com.halfgallon.withcon.domain.notification.repository.NotificationRepository;
 import com.halfgallon.withcon.domain.notification.repository.SseEmitterRepository;
 import com.halfgallon.withcon.domain.notification.service.NotificationService;
-import com.halfgallon.withcon.domain.notification.service.RedisService;
 import com.halfgallon.withcon.domain.notification.service.RedisNotificationService;
+import com.halfgallon.withcon.domain.notification.service.RedisService;
 import com.halfgallon.withcon.domain.notification.service.SseEmitterService;
 import com.halfgallon.withcon.global.exception.CustomException;
-import com.halfgallon.withcon.global.exception.ErrorCode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
