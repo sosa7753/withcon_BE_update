@@ -42,3 +42,6 @@ out/
 ### querydsl ###
 /src/main/generated
 
+### stretch_http
+/scretch_http.http
+
