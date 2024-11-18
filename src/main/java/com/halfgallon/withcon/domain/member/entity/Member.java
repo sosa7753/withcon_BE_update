@@ -2,7 +2,7 @@ package com.halfgallon.withcon.domain.member.entity;
 
 import static lombok.AccessLevel.PROTECTED;
 
-import com.halfgallon.withcon.domain.member.constant.LoginType;
+
 import com.halfgallon.withcon.domain.member.dto.request.UpdateMemberRequest;
 import com.halfgallon.withcon.domain.performance.entitiy.PerformanceLike;
 import com.halfgallon.withcon.global.entity.BaseTimeEntity;
@@ -38,10 +38,6 @@ public class Member extends BaseTimeEntity {
 
   @Column
   private String password;
-
-  @Column(nullable = false)
-  @Enumerated(EnumType.STRING)
-  private LoginType loginType;
 
   @Column(nullable = false)
   private String nickname;

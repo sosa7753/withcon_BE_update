@@ -5,8 +5,7 @@ import java.util.List;
 
 public record ChatRoomRequest(
     String roomName,
-    String performanceId,
-    List<String> tags
+    String performanceId
 ) {
   public ChatRoom toEntity(Long userId) {
     return ChatRoom.builder()
