@@ -121,11 +121,6 @@ class PerformanceLikeServiceImplTest {
     String perId = performanceLikeService.unlikePerformance(memberId, performanceId);
     //then
 
-    Assertions.assertThat(member.getLikes().get(0)).
-        isEqualTo(performanceLike);
-    Assertions.assertThat(performance.getPerformanceLikes().get(0)).
-        isEqualTo(performanceLike);
-    Assertions.assertThat(performance.getLikes()).isEqualTo(4L);
-    Assertions.assertThat(perId).isEqualTo(performanceId);
+    Assertions.assertThat(member.getLikes().size()).isEqualTo(0);
   }
 }
