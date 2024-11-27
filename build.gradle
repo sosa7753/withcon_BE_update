@@ -10,6 +10,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.1.8'
 	id 'io.spring.dependency-management' version '1.1.4'
+	id 'io.gatling.gradle' version '3.13.1'
 }
 
 group = 'com.halfgallon'
@@ -45,7 +46,9 @@ dependencies {
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation 'com.h2database:h2'
+
+	// swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.3'
 
 	//web-socket
 	 implementation 'org.springframework.boot:spring-boot-starter-websocket'
@@ -67,17 +70,6 @@ dependencies {
 	//RabbitMQ
 	implementation 'org.springframework.boot:spring-boot-starter-reactor-netty'
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
-  
-  //ElasticSearch
-	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
-
-	// Open-Feign
-	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-
-	// AWS-S3
-	implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}")
-	implementation'io.awspring.cloud:spring-cloud-aws-starter-s3'
 
 }
 
