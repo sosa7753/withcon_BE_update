@@ -123,7 +123,7 @@ public class NotificationServiceImpl implements NotificationService {
       Member participantMember = chatParticipant.getMember();
 
       if (Objects.equals(participantMember.getId(), request.getTargetId())) {
-        log.info("Service : Target은 제외");
+        log.info("Target 제외 : {}", participantMember.getId());
         continue;
       }
 
