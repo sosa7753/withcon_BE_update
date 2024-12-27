@@ -1,8 +1,11 @@
 package com.halfgallon.withcon.domain.notification.service.impl;
 
+import static com.halfgallon.withcon.global.exception.ErrorCode.REDIS_SUBSCRIBE_FAIL;
+
 import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
 import com.halfgallon.withcon.domain.notification.service.RedisNotificationService;
 import com.halfgallon.withcon.domain.notification.service.handler.RedisListener;
+import com.halfgallon.withcon.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,8 +24,13 @@ public class RedisNotificationServiceImpl implements RedisNotificationService {
 
   @Override
   public void subscribe(String channel) {
-    container.addMessageListener(subscriber, ChannelTopic.of(channel));
-    log.info("redis 채널 구독 성공");
+    try {
+      container.addMessageListener(subscriber, ChannelTopic.of(channel));
+      log.info("redis 채널 구독 성공");
+    }catch (Exception e){
+      log.info("redis 채널 구독 실패");
+      throw new CustomException(REDIS_SUBSCRIBE_FAIL);
+    }
   }
 
   @Override
