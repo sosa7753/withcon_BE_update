@@ -58,6 +58,8 @@ public class NotificationServiceImpl implements NotificationService {
 
   @Override
   public SseEmitter subscribe(Long memberId) {
+    redisNotificationService.subscribe(String.valueOf(memberId));
+
     String emitterId = createEmitterId(memberId);
     SseEmitter sseEmitter = sseEmitterRepository.save(emitterId, new SseEmitter(TIME_OUT));
 
@@ -65,8 +67,6 @@ public class NotificationServiceImpl implements NotificationService {
     sseEmitterService.send(sseEmitter, emitterId,
         SUBSCRIBE.getDescription() + memberId + "\"}");
     log.info("SSE 구독 완료");
-
-    redisNotificationService.subscribe(String.valueOf(memberId));
 
     sseEmitter.onCompletion(() -> {
       log.info("onCompletion callback");

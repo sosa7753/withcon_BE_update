@@ -24,6 +24,7 @@ public enum ErrorCode {
   LOGIN_FAILURE_MESSAGE(BAD_REQUEST.value(), "아이디 혹은 비밀번호가 올바르지 않습니다."),
   OAUTH2_LOGIN_FAILURE_MESSAGE(BAD_REQUEST.value(), "소셜 로그인에 실패하셨습니다."),
   CURRENT_PASSWORD_MISMATCH(BAD_REQUEST.value(), "현재 비밀번호와 일치하지 않습니다."),
+  REDIS_SUBSCRIBE_FAIL(BAD_REQUEST.value(), "알림 구독 실패"),
 
   /**
    * 401 Unauthorized
