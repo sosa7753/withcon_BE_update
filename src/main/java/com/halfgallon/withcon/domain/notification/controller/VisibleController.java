@@ -2,7 +2,6 @@ package com.halfgallon.withcon.domain.notification.controller;
 
 import com.halfgallon.withcon.domain.auth.security.service.CustomUserDetails;
 import com.halfgallon.withcon.domain.notification.dto.VisibleRequest;
-import com.halfgallon.withcon.domain.notification.service.RedisNotificationService;
 import com.halfgallon.withcon.domain.notification.service.VisibleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
