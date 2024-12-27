@@ -1,13 +1,8 @@
 package com.halfgallon.withcon.domain.notification.service.impl;
 
-import com.halfgallon.withcon.domain.notification.constant.RedisCacheType;
 import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
-import com.halfgallon.withcon.domain.notification.dto.VisibleRequest;
-import com.halfgallon.withcon.domain.notification.service.RedisService;
 import com.halfgallon.withcon.domain.notification.service.RedisNotificationService;
 import com.halfgallon.withcon.domain.notification.service.handler.RedisListener;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
