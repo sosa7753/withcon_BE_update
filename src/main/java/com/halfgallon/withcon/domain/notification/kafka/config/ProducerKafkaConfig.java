@@ -2,12 +2,10 @@ package com.halfgallon.withcon.domain.notification.kafka.config;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -29,11 +27,5 @@ public class ProducerKafkaConfig {
   @Bean
   public KafkaTemplate<String, Object> kafkaTemplate() {
     return new KafkaTemplate<>(producerFactory());
-  }
-
-  // kafka 알림 전용 topic
-  @Bean
-  public NewTopic topic() {
-    return TopicBuilder.name("notification").build();
   }
 }
