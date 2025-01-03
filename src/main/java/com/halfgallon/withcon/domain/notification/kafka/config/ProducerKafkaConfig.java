@@ -1,6 +1,5 @@
 package com.halfgallon.withcon.domain.notification.kafka.config;
 
-import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.admin.NewTopic;
