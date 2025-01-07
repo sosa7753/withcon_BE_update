@@ -6,10 +6,6 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 
 public class CustomJsonSerializer extends JsonSerializer<ChatRoomNotificationKafkaRequest> {
 
-  public CustomJsonSerializer() {
-    super();
-  }
-
   public CustomJsonSerializer(ObjectMapper objectMapper) {
     super(objectMapper);
   }
