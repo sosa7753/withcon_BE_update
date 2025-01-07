@@ -6,7 +6,6 @@ import com.halfgallon.withcon.domain.member.entity.Member;
 import com.halfgallon.withcon.domain.member.repository.MemberRepository;
 import com.halfgallon.withcon.domain.notification.constant.NotificationType;
 import com.halfgallon.withcon.domain.notification.entity.Notification;
-import com.halfgallon.withcon.domain.notification.kafka.consumer.Consumer;
 import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaRequest;
 import com.halfgallon.withcon.domain.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +17,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NotificationSaver implements Consumer {
+public class NotificationSaver {
 
   private final MemberRepository memberRepository;
   private final NotificationRepository notificationRepository;
 
   @KafkaListener(topics = NOTIFICATION, containerFactory = "notificationSaveListenerContainerFactory", concurrency = "2")
-  @Override
   public void listener(ConsumerRecord<String, Object> record) {
     ChatRoomNotificationKafkaRequest kafkaRequest = (ChatRoomNotificationKafkaRequest) record.value();
 

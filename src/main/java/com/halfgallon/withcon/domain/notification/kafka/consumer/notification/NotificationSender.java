@@ -5,7 +5,6 @@ import static com.halfgallon.withcon.domain.notification.kafka.constant.KafkaTop
 import com.halfgallon.withcon.domain.notification.constant.RedisCacheType;
 import com.halfgallon.withcon.domain.notification.constant.VisibleType;
 import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
-import com.halfgallon.withcon.domain.notification.kafka.consumer.Consumer;
 import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaRequest;
 import com.halfgallon.withcon.domain.notification.service.RedisService;
 import com.halfgallon.withcon.domain.notification.service.SseEmitterService;
@@ -19,13 +18,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NotificationSender implements Consumer {
+public class NotificationSender {
 
   private final SseEmitterService sseEmitterService;
   private final RedisService redisService;
 
   @KafkaListener(topics = NOTIFICATION, containerFactory = "notificationSendListenerContainerFactory", concurrency = "2")
-  @Override
   public void listener(ConsumerRecord<String, Object> record) {
     ChatRoomNotificationKafkaRequest kafkaRequest = (ChatRoomNotificationKafkaRequest) record.value();
 
