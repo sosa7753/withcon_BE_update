@@ -1,0 +1,19 @@
+version : '1'
+services:
+  zookeeper:
+    image: zookeeper
+    container_name: withcon-zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: withcon-kafka
+    ports:
+      - "9092:9092"
+
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ZOOKEEPER_CONNECT: withcon-zookeeper:2181
+    volumes:
+      - /var/lib/docker.sock:/var/run/docker.sock
