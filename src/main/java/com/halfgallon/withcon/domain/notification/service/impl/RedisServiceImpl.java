@@ -18,20 +18,20 @@ public class RedisServiceImpl implements RedisService {
   private final RedisTemplate<String, Object> redisTemplate;
 
   @Override
-  public Map<Object, Object> getHashByKey(String key) {
-    HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+  public Map<String, Object> getHashByKey(String key) {
+    HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
     return hashOps.entries(key);
   }
 
   @Override
-  public void saveToHash(String hashKey, Map<Object, Object> data, int hourTime) {
+  public void saveToHash(String hashKey, Map<String, Object> data, int hourTime) {
     redisTemplate.opsForHash().putAll(hashKey, data);
 
     redisTemplate.expire(hashKey, Duration.ofHours(hourTime));
   }
 
   @Override
-  public void updateToHash(String hashKey, Object field, Object value) {
+  public void updateToHash(String hashKey, String field, Object value) {
     redisTemplate.opsForHash().put(hashKey, field, value);
   }
 

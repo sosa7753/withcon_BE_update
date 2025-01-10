@@ -6,13 +6,13 @@ import java.util.Map;
 public interface RedisService {
 
   // hashKey로 조회
-  Map<Object, Object> getHashByKey(String key);
+  Map<String, Object> getHashByKey(String key);
 
   // HashKey - Map 구조 저장
-  void saveToHash(String hashKey, Map<Object, Object> data, int hourTime);
+  void saveToHash(String hashKey, Map<String, Object> data, int hourTime);
 
   // HashKey - Map 값 변경
-  void updateToHash(String hashKey, Object field, Object value);
+  void updateToHash(String hashKey, String field, Object value);
 
   ChatRoomSessionDto getChatRoomHashKey(String key, String sessionId);
 
