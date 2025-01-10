@@ -16,6 +16,7 @@ import com.halfgallon.withcon.domain.member.repository.MemberRepository;
 import com.halfgallon.withcon.domain.notification.constant.NotificationType;
 import com.halfgallon.withcon.domain.notification.dto.ChatRoomNotificationRequest;
 import com.halfgallon.withcon.domain.notification.kafka.constant.KafkaTopic;
+import com.halfgallon.withcon.domain.notification.kafka.constant.NotificationProducerType;
 import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaRequest;
 import com.halfgallon.withcon.global.exception.CustomException;
 import java.time.LocalDateTime;
@@ -28,37 +29,35 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ChatRoomNotificationProducer implements Producer {
+public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificationRequest> {
 
   private final KafkaTemplate<String, Object> kafkaTemplate;
   private final ChatParticipantRepository chatParticipantRepository;
   private final MemberRepository memberRepository;
 
   @Override
-  public void createProducer(Object request) {
-    ChatRoomNotificationRequest req = (ChatRoomNotificationRequest) request;
-
+  public void send(ChatRoomNotificationRequest request) {
     List<ChatParticipant> chatParticipants = chatParticipantRepository.
-        findAllByChatRoom_Id(req.getChatRoomId());
+        findAllByChatRoom_Id(request.getChatRoomId());
     log.info("채팅방 참여자 조회");
 
-    Member target = memberRepository.findById(req.getTargetId())
+    Member target = memberRepository.findById(request.getTargetId())
         .orElse(withdrawMember());
 
-    String message = createChatRoomMessage(target.getNickname(), req.getMessageType());
-    String url = createChatRoomUrl(req.getChatRoomId());
+    String message = createChatRoomMessage(target.getNickname(), request.getMessageType());
+    String url = createChatRoomUrl(request.getChatRoomId());
 
     for (ChatParticipant chatParticipant : chatParticipants) {
       Member member = chatParticipant.getMember();
-      if (member.getId().equals(req.getTargetId())) {
-        log.info("target 제외 : {}", req.getTargetId());
+      if (member.getId().equals(request.getTargetId())) {
+        log.info("target 제외 : {}", request.getTargetId());
         continue;
       }
 
       ChatRoomNotificationKafkaRequest kafkaRequest =
           ChatRoomNotificationKafkaRequest.builder()
               .memberId(member.getId())
-              .chatRoomId(req.getChatRoomId())
+              .chatRoomId(request.getChatRoomId())
               .message(message)
               .url(url)
               .createdAt(LocalDateTime.now())
@@ -66,6 +65,11 @@ public class ChatRoomNotificationProducer implements Producer {
 
       kafkaTemplate.send(KafkaTopic.NOTIFICATION, kafkaRequest);
     }
+  }
+
+  @Override
+  public NotificationProducerType getType() {
+    return NotificationProducerType.CHATROOM_USER;
   }
 
   // 알림 메세지 반환

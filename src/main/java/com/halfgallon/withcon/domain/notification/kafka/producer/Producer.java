@@ -1,5 +1,9 @@
 package com.halfgallon.withcon.domain.notification.kafka.producer;
 
-public interface Producer {
-  void createProducer(Object request) ;
+import com.halfgallon.withcon.domain.notification.kafka.constant.NotificationProducerType;
+
+public interface Producer<T> {
+  void send(T request);
+  NotificationProducerType getType();
 }
+
