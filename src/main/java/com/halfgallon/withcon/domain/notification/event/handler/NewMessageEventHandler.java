@@ -37,15 +37,15 @@ public class NewMessageEventHandler {
         + event.getChatRoomId();
     log.info("Event Handle : 채널 KEY: " + visibleKey);
 
-    Map<Object, Object> cache = redisService.getHashByKey(visibleKey);
+    Map<String, Object> cache = redisService.getHashByKey(visibleKey);
     log.info("Event : Visible 캐시 데이터 조회" + cache);
 
     if(cache != null) { // 기존 캐시 Map이 존재 한다면
-      for(Map.Entry<Object, Object> entry : cache.entrySet()) {
+      for(Map.Entry<String, Object> entry : cache.entrySet()) {
         VisibleType visibleType = VisibleType.valueOf((String)entry.getValue());
 
         if(visibleType == VisibleType.HIDDEN) {
-          memberRepository.findById(Long.parseLong((String)entry.getKey()))
+          memberRepository.findById(Long.parseLong(entry.getKey()))
               .ifPresent(member -> {
                 newMessageSaveAndPublish(event, member);
                 cache.put(entry.getKey(), VisibleType.NONE);
@@ -67,7 +67,7 @@ public class NewMessageEventHandler {
     notificationRepository.save(notification);
     log.info("Event : 알림 저장 성공 ");
 
-    redisNotificationService.publish(String.valueOf(member.getId()), new NotificationResponse(notification));
+    redisNotificationService.publish(String.valueOf(member.getId()), NotificationResponse.from(notification));
     log.info("Event : 메세지 발행 ");
   }
 

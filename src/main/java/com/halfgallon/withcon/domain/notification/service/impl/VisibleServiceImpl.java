@@ -22,13 +22,13 @@ public class VisibleServiceImpl implements VisibleService {
     String hashKey = RedisCacheType.VISIBLE_CACHE.getDescription() + request.getChatRoomId();
     log.info("Visible 채널 명 : {}", hashKey);
 
-    Map<Object, Object> visibleCaches = redisService.getHashByKey(hashKey);
+    Map<String, Object> visibleCaches = redisService.getHashByKey(hashKey);
     log.info("Hash 데이터 조회 : {}", visibleCaches);
 
     if (visibleCaches != null) { // 특정 채팅방의 Map이 이미 존재한다면
       redisService.updateToHash(hashKey, String.valueOf(memberId), request.getVisibleType());
     } else {
-      Map<Object, Object> newObject = new HashMap<>();
+      Map<String, Object> newObject = new HashMap<>();
       newObject.put(String.valueOf(memberId), request.getVisibleType());
       redisService.saveToHash(hashKey, newObject, 24);
     }
