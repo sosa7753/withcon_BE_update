@@ -14,13 +14,17 @@ import com.halfgallon.withcon.domain.chat.repository.ChatParticipantRepository;
 import com.halfgallon.withcon.domain.member.entity.Member;
 import com.halfgallon.withcon.domain.member.repository.MemberRepository;
 import com.halfgallon.withcon.domain.notification.constant.NotificationType;
+import com.halfgallon.withcon.domain.notification.constant.RedisCacheType;
+import com.halfgallon.withcon.domain.notification.constant.VisibleType;
 import com.halfgallon.withcon.domain.notification.dto.ChatRoomNotificationRequest;
 import com.halfgallon.withcon.domain.notification.kafka.constant.KafkaTopic;
 import com.halfgallon.withcon.domain.notification.kafka.constant.NotificationProducerType;
 import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaRequest;
+import com.halfgallon.withcon.domain.notification.service.RedisService;
 import com.halfgallon.withcon.global.exception.CustomException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -34,12 +38,17 @@ public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificati
   private final KafkaTemplate<String, Object> kafkaTemplate;
   private final ChatParticipantRepository chatParticipantRepository;
   private final MemberRepository memberRepository;
+  private final RedisService redisService;
 
   @Override
   public void send(ChatRoomNotificationRequest request) {
-    List<ChatParticipant> chatParticipants = chatParticipantRepository.
-        findAllByChatRoom_Id(request.getChatRoomId());
-    log.info("채팅방 참여자 조회");
+    List<ChatParticipant> chatParticipants = getChatParticipants(
+        request.getChatRoomId());
+
+    Map<String, Object> cache = getRedisCache(request.getChatRoomId());
+    if (cache == null) {
+      return;
+    }
 
     Member target = memberRepository.findById(request.getTargetId())
         .orElse(withdrawMember());
@@ -54,17 +63,37 @@ public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificati
         continue;
       }
 
-      ChatRoomNotificationKafkaRequest kafkaRequest =
-          ChatRoomNotificationKafkaRequest.builder()
-              .memberId(member.getId())
-              .chatRoomId(request.getChatRoomId())
-              .message(message)
-              .url(url)
-              .createdAt(LocalDateTime.now())
-              .build();
+      Object visible = cache.get(String.valueOf(member.getId()));
+      if (visible != null && (VisibleType.valueOf((String) visible) == VisibleType.HIDDEN ||
+              VisibleType.valueOf((String) visible) == VisibleType.NONE)) {
 
-      kafkaTemplate.send(KafkaTopic.NOTIFICATION, kafkaRequest);
+        ChatRoomNotificationKafkaRequest kafkaRequest =
+            ChatRoomNotificationKafkaRequest.builder()
+                .memberId(member.getId())
+                .chatRoomId(request.getChatRoomId())
+                .message(message)
+                .url(url)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        kafkaTemplate.send(KafkaTopic.NOTIFICATION, kafkaRequest);
+      }
     }
+  }
+
+  private List<ChatParticipant> getChatParticipants(Long chatRoomId) {
+    List<ChatParticipant> chatParticipants = chatParticipantRepository.
+        findAllByChatRoom_Id(chatRoomId);
+    log.info("채팅방 참여자 조회");
+    return chatParticipants;
+  }
+
+  private Map<String, Object> getRedisCache(Long chatRoomId) {
+    String visibleKey = RedisCacheType.VISIBLE_CACHE.getDescription()
+        + chatRoomId;
+    log.info("채팅방 유저 상태 정보 조회 : {}", chatRoomId);
+
+    return redisService.getHashByKey(visibleKey);
   }
 
   @Override
