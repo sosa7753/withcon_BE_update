@@ -10,8 +10,8 @@ import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
 import com.halfgallon.withcon.domain.notification.entity.Notification;
 import com.halfgallon.withcon.domain.notification.event.NewMessageEvent;
 import com.halfgallon.withcon.domain.notification.repository.NotificationRepository;
-import com.halfgallon.withcon.domain.notification.service.RedisService;
-import com.halfgallon.withcon.domain.notification.service.RedisNotificationService;
+import com.halfgallon.withcon.domain.notification.service.redis.service.RedisHashService;
+import com.halfgallon.withcon.domain.notification.service.redis.service.RedisNotificationService;
 import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class NewMessageEventHandler {
 
   private final RedisNotificationService redisNotificationService;
-  private final RedisService redisService;
+  private final RedisHashService redisHashService;
   private final MemberRepository memberRepository;
   private final NotificationRepository notificationRepository;
 
@@ -37,7 +37,7 @@ public class NewMessageEventHandler {
         + event.getChatRoomId();
     log.info("Event Handle : 채널 KEY: " + visibleKey);
 
-    Map<String, Object> cache = redisService.getHashByKey(visibleKey);
+    Map<String, Object> cache = redisHashService.getHashByKey(visibleKey);
     log.info("Event : Visible 캐시 데이터 조회" + cache);
 
     if(cache != null) { // 기존 캐시 Map이 존재 한다면
@@ -52,7 +52,7 @@ public class NewMessageEventHandler {
               });
         }
       }
-      redisService.saveToHash(visibleKey, cache, 24);
+      redisHashService.saveToHash(visibleKey, cache, 24);
     }
   }
   private void newMessageSaveAndPublish(NewMessageEvent event, Member member) {

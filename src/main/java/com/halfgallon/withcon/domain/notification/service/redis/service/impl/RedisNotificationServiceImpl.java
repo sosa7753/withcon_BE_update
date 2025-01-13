@@ -1,10 +1,10 @@
-package com.halfgallon.withcon.domain.notification.service.impl;
+package com.halfgallon.withcon.domain.notification.service.redis.service.impl;
 
 import static com.halfgallon.withcon.global.exception.ErrorCode.REDIS_SUBSCRIBE_FAIL;
 
 import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
-import com.halfgallon.withcon.domain.notification.service.RedisNotificationService;
-import com.halfgallon.withcon.domain.notification.service.handler.RedisListener;
+import com.halfgallon.withcon.domain.notification.service.redis.service.RedisNotificationService;
+import com.halfgallon.withcon.domain.notification.service.redis.handler.RedisListener;
 import com.halfgallon.withcon.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

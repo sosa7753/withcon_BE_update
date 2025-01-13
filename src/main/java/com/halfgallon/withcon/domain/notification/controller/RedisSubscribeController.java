@@ -1,6 +1,6 @@
 package com.halfgallon.withcon.domain.notification.controller;
 
-import com.halfgallon.withcon.domain.notification.service.handler.ChatRoomRedisSubscriber;
+import com.halfgallon.withcon.domain.notification.service.redis.handler.ChatRoomRedisSubscriber;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

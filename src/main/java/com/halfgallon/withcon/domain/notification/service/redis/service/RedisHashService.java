@@ -1,9 +1,9 @@
-package com.halfgallon.withcon.domain.notification.service;
+package com.halfgallon.withcon.domain.notification.service.redis.service;
 
 import com.halfgallon.withcon.domain.chat.dto.ChatRoomSessionDto;
 import java.util.Map;
 
-public interface RedisService {
+public interface RedisHashService {
 
   // hashKey로 조회
   Map<String, Object> getHashByKey(String key);

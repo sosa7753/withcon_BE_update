@@ -1,4 +1,4 @@
-package com.halfgallon.withcon.domain.notification.service.handler;
+package com.halfgallon.withcon.domain.notification.service.redis.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

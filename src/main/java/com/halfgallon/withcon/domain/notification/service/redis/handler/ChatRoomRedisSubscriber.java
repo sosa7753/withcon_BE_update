@@ -1,4 +1,4 @@
-package com.halfgallon.withcon.domain.notification.service.handler;
+package com.halfgallon.withcon.domain.notification.service.redis.handler;
 
 import com.halfgallon.withcon.domain.notification.constant.Channel;
 import lombok.RequiredArgsConstructor;
