@@ -14,7 +14,7 @@ import com.halfgallon.withcon.domain.chat.repository.ChatParticipantRepository;
 import com.halfgallon.withcon.domain.chat.repository.ChatRoomRepository;
 import com.halfgallon.withcon.domain.member.entity.Member;
 import com.halfgallon.withcon.domain.member.repository.MemberRepository;
-import com.halfgallon.withcon.domain.notification.service.RedisService;
+import com.halfgallon.withcon.domain.notification.service.redis.service.RedisHashService;
 import com.halfgallon.withcon.global.exception.CustomException;
 import com.halfgallon.withcon.global.exception.ErrorCode;
 import java.util.Objects;
@@ -43,7 +43,7 @@ public class StompPreHandler implements ChannelInterceptor {
   private final ChatParticipantRepository participantRepository;
   private final ChatMessageRepository chatMessageRepository;
 
-  private final RedisService redisService;
+  private final RedisHashService redisHashService;
 
   @Override
   public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -87,7 +87,7 @@ public class StompPreHandler implements ChannelInterceptor {
       String sessionId = accessor.getSessionId();
       assert sessionId != null;
 
-      ChatRoomSessionDto sessionDto = redisService.getChatRoomHashKey(CHATROOM_SESSION, sessionId);
+      ChatRoomSessionDto sessionDto = redisHashService.getChatRoomHashKey(CHATROOM_SESSION, sessionId);
       if (sessionDto == null) {
         return message;
       }
@@ -107,7 +107,7 @@ public class StompPreHandler implements ChannelInterceptor {
                     })
                 );
 
-        redisService.deleteHashKey(CHATROOM_SESSION, sessionId);
+        redisHashService.deleteHashKey(CHATROOM_SESSION, sessionId);
         log.info("[preSend] stomp disconnect deleteHashKey 완료");
 
       } catch (Exception e) {
@@ -160,7 +160,7 @@ public class StompPreHandler implements ChannelInterceptor {
         .memberId(memberId)
         .build();
 
-    redisService.updateToHash(CHATROOM_SESSION, sessionId, sessionDto);
+    redisHashService.updateToHash(CHATROOM_SESSION, sessionId, sessionDto);
   }
 
 }

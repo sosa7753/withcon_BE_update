@@ -1,4 +1,4 @@
-package com.halfgallon.withcon.domain.notification.service;
+package com.halfgallon.withcon.domain.notification.service.redis.service;
 
 import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
 

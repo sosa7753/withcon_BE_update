@@ -1,7 +1,7 @@
-package com.halfgallon.withcon.domain.notification.service.impl;
+package com.halfgallon.withcon.domain.notification.service.redis.service.impl;
 
 import com.halfgallon.withcon.domain.chat.dto.ChatRoomSessionDto;
-import com.halfgallon.withcon.domain.notification.service.RedisService;
+import com.halfgallon.withcon.domain.notification.service.redis.service.RedisHashService;
 import java.time.Duration;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RedisServiceImpl implements RedisService {
+public class RedisHashServiceImpl implements RedisHashService {
 
   private final RedisTemplate<String, Object> redisTemplate;
 

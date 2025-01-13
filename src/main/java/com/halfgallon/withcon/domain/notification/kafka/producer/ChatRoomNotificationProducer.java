@@ -20,7 +20,7 @@ import com.halfgallon.withcon.domain.notification.dto.ChatRoomNotificationReques
 import com.halfgallon.withcon.domain.notification.kafka.constant.KafkaTopic;
 import com.halfgallon.withcon.domain.notification.kafka.constant.NotificationProducerType;
 import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaRequest;
-import com.halfgallon.withcon.domain.notification.service.RedisService;
+import com.halfgallon.withcon.domain.notification.service.redis.service.RedisHashService;
 import com.halfgallon.withcon.global.exception.CustomException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,7 +38,7 @@ public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificati
   private final KafkaTemplate<String, Object> kafkaTemplate;
   private final ChatParticipantRepository chatParticipantRepository;
   private final MemberRepository memberRepository;
-  private final RedisService redisService;
+  private final RedisHashService redisHashService;
 
   @Override
   public void send(ChatRoomNotificationRequest request) {
@@ -93,7 +93,7 @@ public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificati
         + chatRoomId;
     log.info("채팅방 유저 상태 정보 조회 : {}", chatRoomId);
 
-    return redisService.getHashByKey(visibleKey);
+    return redisHashService.getHashByKey(visibleKey);
   }
 
   @Override
