@@ -53,3 +53,7 @@ out/
 
 ### gatling ###
 /src/gatling
+/.mvn/wrapper/maven-wrapper.jar
+/.mvn/wrapper/maven-wrapper.properties
+/mvnw
+/mvnw.cmd
