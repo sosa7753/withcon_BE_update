@@ -4,8 +4,8 @@ public interface RedisStringService {
 
   String get(String key);
 
-  void save(String Key, String value);
+  void save(String key, String value);
 
-  void delete(String Key);
+  void delete(String key);
 
 }
