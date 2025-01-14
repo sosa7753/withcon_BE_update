@@ -123,7 +123,7 @@ public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificati
 
   private Member withdrawMember() {
     return Member.builder()
-        .username("탈퇴한 회원")
+        .nickname("탈퇴한 회원")
         .build();
   }
 }
