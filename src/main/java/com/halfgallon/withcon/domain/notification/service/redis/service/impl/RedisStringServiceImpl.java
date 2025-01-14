@@ -1,10 +1,15 @@
 package com.halfgallon.withcon.domain.notification.service.redis.service.impl;
 
+import static com.halfgallon.withcon.global.exception.ErrorCode.REDIS_SUBSCRIBE_FAIL;
+
 import com.halfgallon.withcon.domain.notification.service.redis.service.RedisStringService;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import com.halfgallon.withcon.global.exception.CustomException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -25,15 +30,22 @@ public class RedisStringServiceImpl implements RedisStringService {
 
   @Override
   public void save(String key, String value) {
-    redisTemplate.opsForValue().set(key, value);
-    log.info("공유 메모리 key : {}, value : {}", key, value);
-    redisTemplate.expire(key, ttl);
-    log.info("공유 메모리 key : {}, ttl : {}", key, ttl);
+    try {
+      redisTemplate.opsForValue().set(key, value);
+      log.info("공유 메모리 key : {}, value : {}", key, value);
+      redisTemplate.expire(key, ttl);
+      log.info("공유 메모리 key : {}, ttl : {}", key, ttl);
+    } catch (Exception e) {
+      throw new CustomException(REDIS_SUBSCRIBE_FAIL);
+    }
   }
 
   @Override
   public void delete(String key) {
-    redisTemplate.delete(key);
-    log.info("공유 메모리 key 삭제 {}", key);
+    try {
+      redisTemplate.delete(key);
+    } catch (Exception e) {
+      log.info("공유 메모리 삭제 실패 {}", key);
+    }
   }
 }
