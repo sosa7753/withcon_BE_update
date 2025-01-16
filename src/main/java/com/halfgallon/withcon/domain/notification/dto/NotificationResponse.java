@@ -6,15 +6,18 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class NotificationResponse {
 
   private Long memberId;
   private String message;
   private String url;
+
   private LocalDateTime createdAt;
 
   public static NotificationResponse from(Notification notification) {
@@ -26,3 +29,5 @@ public class NotificationResponse {
         .build();
   }
 }
+
+
