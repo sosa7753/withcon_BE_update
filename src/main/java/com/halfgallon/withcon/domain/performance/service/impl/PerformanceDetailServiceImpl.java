@@ -2,7 +2,6 @@ package com.halfgallon.withcon.domain.performance.service.impl;
 
 import com.halfgallon.withcon.domain.performance.dto.request.PerformanceDetailRequest;
 import com.halfgallon.withcon.domain.performance.dto.response.PerformanceDetailResponse;
-import com.halfgallon.withcon.domain.performance.entitiy.Performance;
 import com.halfgallon.withcon.domain.performance.entitiy.PerformanceDetail;
 import com.halfgallon.withcon.domain.performance.repository.PerformanceDetailRepository;
 import com.halfgallon.withcon.domain.performance.repository.PerformanceRepository;

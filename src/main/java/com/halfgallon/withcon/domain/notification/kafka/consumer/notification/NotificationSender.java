@@ -2,9 +2,13 @@ package com.halfgallon.withcon.domain.notification.kafka.consumer.notification;
 
 import static com.halfgallon.withcon.domain.notification.kafka.constant.KafkaTopic.NOTIFICATION;
 
-import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
-import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaRequest;
+import com.halfgallon.withcon.domain.notification.dto.NotificationResponses;
+import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaArrayRequest;
 import com.halfgallon.withcon.domain.notification.service.redis.service.RedisStringService;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -17,33 +21,51 @@ import org.springframework.web.reactive.function.client.WebClient;
 @RequiredArgsConstructor
 public class NotificationSender {
 
+  private static final Map<String, List<Long>> SERVER = new HashMap<>();
+
   private final WebClient webClient;
   private final RedisStringService redisStringService;
 
   @KafkaListener(topics = NOTIFICATION, containerFactory = "notificationSendListenerContainerFactory", concurrency = "2")
   public void listener(ConsumerRecord<String, Object> record) {
-    ChatRoomNotificationKafkaRequest kafkaRequest = (ChatRoomNotificationKafkaRequest) record.value();
+    ChatRoomNotificationKafkaArrayRequest kafkaRequest = (ChatRoomNotificationKafkaArrayRequest) record.value();
 
-    String serverIp = redisStringService.get(String.valueOf(kafkaRequest.getMemberId()));
-    if(serverIp == null) {
-      return;
+    List<Long> members = kafkaRequest.getMembers();
+    List<String> serverIps = redisStringService.multiGet(members);
+
+    for (int i = 0; i < members.size(); i++) {
+      String serverIp = serverIps.get(i);
+      if (serverIp == null) {
+        continue;
+      }
+
+      List<Long> list = SERVER.get(serverIp);
+      if (list == null) {
+        list = new ArrayList<>();
+        SERVER.put(serverIp, list);
+      }
+      list.add(members.get(i));
     }
 
-    NotificationResponse notificationResponse =
-        NotificationResponse.builder()
-            .memberId(kafkaRequest.getMemberId())
-            .message(kafkaRequest.getMessage())
-            .url(kafkaRequest.getUrl())
-            .createdAt(kafkaRequest.getCreatedAt())
-            .build();
+    for (Map.Entry<String, List<Long>> entry : SERVER.entrySet()) {
+      NotificationResponses notificationResponses =
+          NotificationResponses.builder()
+              .memberIds(entry.getValue())
+              .message(kafkaRequest.getMessage())
+              .url(kafkaRequest.getUrl())
+              .createdAt(kafkaRequest.getCreatedAt())
+              .build();
 
-    webClient.post()
-        .uri("http://" + serverIp + "/notification/send")
-        .bodyValue(notificationResponse)
-        .retrieve()
-        .toBodilessEntity()
-        .doOnSuccess(response -> log.info("알림 전송 성공 {}", notificationResponse.getMemberId()))
-        .doOnError(error -> log.error("알림 전송 실패 {}", notificationResponse.getMemberId()))
-        .subscribe();
+//      sseEmitterService.sendMultiNotificationToClient(notificationResponses);
+
+      webClient.post()
+          .uri("http://" + entry.getKey() + "/notifications/send")
+          .bodyValue(notificationResponses)
+          .retrieve()
+          .toBodilessEntity()
+          .doOnSuccess(response -> log.info("알림 전송 성공 서버: {}", entry.getKey()))
+          .doOnError(error -> log.error("알림 전송 실패 서버: {}", entry.getKey()))
+          .subscribe();
+    }
   }
 }

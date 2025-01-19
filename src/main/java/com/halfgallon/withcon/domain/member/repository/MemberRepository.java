@@ -1,6 +1,7 @@
 package com.halfgallon.withcon.domain.member.repository;
 
 import com.halfgallon.withcon.domain.member.entity.Member;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,5 +13,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
   boolean existsByPhoneNumber(String phoneNumber);
 
   Optional<Member> findByUsername(String username);
+
+  List<Member> findByIdIn(List<Long> memberIds);
 
 }

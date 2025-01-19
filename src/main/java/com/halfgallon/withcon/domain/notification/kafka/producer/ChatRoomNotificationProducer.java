@@ -19,10 +19,11 @@ import com.halfgallon.withcon.domain.notification.constant.VisibleType;
 import com.halfgallon.withcon.domain.notification.dto.ChatRoomNotificationRequest;
 import com.halfgallon.withcon.domain.notification.kafka.constant.KafkaTopic;
 import com.halfgallon.withcon.domain.notification.kafka.constant.NotificationProducerType;
-import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaRequest;
+import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaArrayRequest;
 import com.halfgallon.withcon.domain.notification.service.redis.service.RedisHashService;
 import com.halfgallon.withcon.global.exception.CustomException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificationRequest> {
 
+  private static final int DIVVALUE = 100;
+  private static final List<ArrayList<Long>> MEMBERS = new ArrayList<>();
+
   private final KafkaTemplate<String, Object> kafkaTemplate;
   private final ChatParticipantRepository chatParticipantRepository;
   private final MemberRepository memberRepository;
@@ -44,6 +48,9 @@ public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificati
   public void send(ChatRoomNotificationRequest request) {
     List<ChatParticipant> chatParticipants = getChatParticipants(
         request.getChatRoomId());
+    if(chatParticipants.isEmpty()) {
+      return;
+    }
 
     Map<String, Object> cache = getRedisCache(request.getChatRoomId());
     if (cache == null) {
@@ -56,6 +63,14 @@ public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificati
     String message = createChatRoomMessage(target.getNickname(), request.getMessageType());
     String url = createChatRoomUrl(request.getChatRoomId());
 
+    // 묶음 처리
+    int group = (chatParticipants.size() + DIVVALUE - 1) / DIVVALUE;
+    for(int i=0; i<group; i++) {
+      MEMBERS.add(new ArrayList<>());
+    }
+
+    int row = 0;
+    int col = 0;
     for (ChatParticipant chatParticipant : chatParticipants) {
       Member member = chatParticipant.getMember();
       if (member.getId().equals(request.getTargetId())) {
@@ -65,18 +80,24 @@ public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificati
 
       Object visible = cache.get(String.valueOf(member.getId()));
       if (visible != null && (VisibleType.valueOf((String) visible) == VisibleType.HIDDEN ||
-              VisibleType.valueOf((String) visible) == VisibleType.NONE)) {
+          VisibleType.valueOf((String) visible) == VisibleType.NONE)) {
 
-        ChatRoomNotificationKafkaRequest kafkaRequest =
-            ChatRoomNotificationKafkaRequest.builder()
-                .memberId(member.getId())
-                .chatRoomId(request.getChatRoomId())
-                .message(message)
-                .url(url)
-                .createdAt(LocalDateTime.now())
-                .build();
+        MEMBERS.get(row).add(member.getId());
+        col++;
 
-        kafkaTemplate.send(KafkaTopic.NOTIFICATION, kafkaRequest);
+        // user group 경계선
+        if (col % DIVVALUE == 0) {
+          ChatRoomNotificationKafkaArrayRequest kafkaArrayRequest
+              = ChatRoomNotificationKafkaArrayRequest.builder()
+              .members(MEMBERS.get(row))
+              .message(message)
+              .url(url)
+              .createdAt(LocalDateTime.now())
+              .build();
+          row++;
+
+          kafkaTemplate.send(KafkaTopic.NOTIFICATION, kafkaArrayRequest);
+        }
       }
     }
   }
