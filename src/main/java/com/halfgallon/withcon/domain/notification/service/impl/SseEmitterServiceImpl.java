@@ -1,13 +1,16 @@
 package com.halfgallon.withcon.domain.notification.service.impl;
 
 import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
+import com.halfgallon.withcon.domain.notification.dto.NotificationResponses;
 import com.halfgallon.withcon.domain.notification.repository.SseEmitterRepository;
 import com.halfgallon.withcon.domain.notification.service.SseEmitterService;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -18,6 +21,7 @@ public class SseEmitterServiceImpl implements SseEmitterService {
 
   private final SseEmitterRepository sseEmitterRepository;
 
+  @Async
   @Override
   public void sendNotificationToClient(NotificationResponse notificationResponse) {
     Map<String, SseEmitter> emitters =
@@ -25,6 +29,27 @@ public class SseEmitterServiceImpl implements SseEmitterService {
             notificationResponse.getMemberId().toString());
 
     emitters.forEach((key, value) -> send(value, key, notificationResponse));
+  }
+
+  @Async
+  @Override
+  public void sendMultiNotificationToClient(NotificationResponses notificationResponses) {
+    List<Long> members = notificationResponses.getMemberIds();
+    for(Long memberId : members) {
+      Map<String, SseEmitter> emitters =
+          sseEmitterRepository.findAllByMemberIdStartsWith(
+              String.valueOf(memberId));
+
+      NotificationResponse notificationResponse =
+          NotificationResponse.builder()
+              .memberId(memberId)
+              .message(notificationResponses.getMessage())
+              .url(notificationResponses.getUrl())
+              .createdAt(notificationResponses.getCreatedAt())
+              .build();
+
+      emitters.forEach((key, value) -> send(value, key, notificationResponse));
+    }
   }
 
   // 알림 전송
