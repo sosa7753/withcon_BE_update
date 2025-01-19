@@ -4,12 +4,11 @@ import static com.halfgallon.withcon.global.exception.ErrorCode.REDIS_SUBSCRIBE_
 
 import com.halfgallon.withcon.domain.notification.service.redis.service.RedisStringService;
 import java.time.Duration;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import com.halfgallon.withcon.global.exception.CustomException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +25,13 @@ public class RedisStringServiceImpl implements RedisStringService {
   @Override
   public String get(String key) {
     return redisTemplate.opsForValue().get(key);
+  }
+
+  @Override
+  public List<String> multiGet(List<Long> keys) {
+    List<String> stringKeys = keys.stream().map(String::valueOf)
+            .toList();
+    return redisTemplate.opsForValue().multiGet(stringKeys);
   }
 
   @Override
