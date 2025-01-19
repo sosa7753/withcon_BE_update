@@ -4,7 +4,6 @@ import com.halfgallon.withcon.domain.performance.constant.Genre;
 import com.halfgallon.withcon.domain.performance.dto.request.PerformanceRequest;
 import com.halfgallon.withcon.domain.performance.dto.response.PerformanceResponse;
 import com.halfgallon.withcon.domain.performance.entitiy.Performance;
-import com.halfgallon.withcon.domain.performance.repository.PerformanceLikeRepository;
 import com.halfgallon.withcon.domain.performance.repository.PerformanceRepository;
 import com.halfgallon.withcon.domain.performance.service.PerformanceService;
 import com.halfgallon.withcon.global.exception.CustomException;

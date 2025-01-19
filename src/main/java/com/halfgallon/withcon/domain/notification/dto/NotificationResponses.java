@@ -1,6 +1,7 @@
-package com.halfgallon.withcon.domain.notification.kafka.dto;
+package com.halfgallon.withcon.domain.notification.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,13 +10,14 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class ChatRoomNotificationKafkaRequest {
+public class NotificationResponses {
 
-  private Long memberId;
+  private List<Long> memberIds;
   private String message;
   private String url;
 
   private LocalDateTime createdAt;
+
 }
