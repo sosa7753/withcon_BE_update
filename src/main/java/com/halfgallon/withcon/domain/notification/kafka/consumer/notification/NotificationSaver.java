@@ -6,8 +6,10 @@ import com.halfgallon.withcon.domain.member.entity.Member;
 import com.halfgallon.withcon.domain.member.repository.MemberRepository;
 import com.halfgallon.withcon.domain.notification.constant.NotificationType;
 import com.halfgallon.withcon.domain.notification.entity.Notification;
-import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaRequest;
+import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaArrayRequest;
 import com.halfgallon.withcon.domain.notification.repository.NotificationRepository;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -24,22 +26,24 @@ public class NotificationSaver {
 
   @KafkaListener(topics = NOTIFICATION, containerFactory = "notificationSaveListenerContainerFactory", concurrency = "2")
   public void listener(ConsumerRecord<String, Object> record) {
-    ChatRoomNotificationKafkaRequest kafkaRequest = (ChatRoomNotificationKafkaRequest) record.value();
+    ChatRoomNotificationKafkaArrayRequest kafkaRequest = (ChatRoomNotificationKafkaArrayRequest) record.value();
 
-    // 유저가 탈퇴 했다면 무시
-    Member member = memberRepository.findById(kafkaRequest.getMemberId()).orElse(null);
-    if (member == null) {
-      return;
+    List<Member> members = memberRepository.findByIdIn(kafkaRequest.getMembers());
+
+    List<Notification> notifications = new ArrayList<>();
+    for(Member member : members) {
+      Notification notification = Notification.builder()
+          .message(kafkaRequest.getMessage())
+          .url(kafkaRequest.getUrl())
+          .notificationType(NotificationType.CHATROOM)
+          .createdAt(kafkaRequest.getCreatedAt())
+          .member(member)
+          .build();
+
+      notifications.add(notification);
     }
 
-    Notification notification = Notification.builder()
-        .message(kafkaRequest.getMessage())
-        .url(kafkaRequest.getUrl())
-        .notificationType(NotificationType.CHATROOM)
-        .createdAt(kafkaRequest.getCreatedAt())
-        .member(member)
-        .build();
-    notificationRepository.save(notification);
+    notificationRepository.saveAll(notifications);
     log.info("알림 저장 성공");
   }
 }

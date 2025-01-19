@@ -13,4 +13,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
   void deleteByCreatedAtBefore(LocalDateTime time);
 
+  @Override
+  <S extends Notification> List<S> saveAll(Iterable<S> entities);
 }
