@@ -1,4 +1,4 @@
-package com.halfgallon.withcon.domain.notification.repository;
+package com.halfgallon.withcon.domain.notification.repository.impl;
 
 import com.halfgallon.withcon.domain.member.entity.Member;
 import com.halfgallon.withcon.domain.notification.constant.NotificationType;
@@ -16,37 +16,16 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @ActiveProfiles("test")
 @SpringBootTest
 @WebAppConfiguration
-class NotificationRepositoryTest {
+class BatchNotificationRepositoryTest {
 
   private static final int MAX = 1000;
 
   @Autowired
-  NotificationRepository notificationRepository;
+  BatchNotificationRepository batchNotificationRepository;
 
   @Test
-  @DisplayName("save 저장")
-  void singleSaveTest() {
-
-    long start = System.currentTimeMillis();
-
-    for(int i=1; i<=MAX; i++) {
-      Notification notification = Notification.builder()
-          .member(makeMember((long) i))
-          .notificationType(NotificationType.CHATROOM)
-          .message("test 알림")
-          .createdAt(LocalDateTime.now())
-          .readStatus(false)
-          .url("test")
-          .build();
-
-      notificationRepository.save(notification);
-    }
-    System.out.println("실행 시간: " + (System.currentTimeMillis() - start) + "ms");
-  }
-
-  @Test
-  @DisplayName("saveAll 저장")
-  void multiSaveTest() {
+  @DisplayName("BatchInsert 저장")
+  void batchSaveTest() {
 
     long start = System.currentTimeMillis();
     List<Notification> notifications = new ArrayList<>();
@@ -63,8 +42,7 @@ class NotificationRepositoryTest {
 
       notifications.add(notification);
     }
-
-    notificationRepository.saveAll(notifications);
+    batchNotificationRepository.saveAll(notifications);
     System.out.println("실행 시간: " + (System.currentTimeMillis() - start) + "ms");
   }
 

@@ -7,7 +7,7 @@ import com.halfgallon.withcon.domain.member.repository.MemberRepository;
 import com.halfgallon.withcon.domain.notification.constant.NotificationType;
 import com.halfgallon.withcon.domain.notification.entity.Notification;
 import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaArrayRequest;
-import com.halfgallon.withcon.domain.notification.repository.NotificationRepository;
+import com.halfgallon.withcon.domain.notification.repository.impl.BatchNotificationRepository;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class NotificationSaver {
 
   private final MemberRepository memberRepository;
-  private final NotificationRepository notificationRepository;
+  private final BatchNotificationRepository batchNotificationRepository;
 
   @KafkaListener(topics = NOTIFICATION, containerFactory = "notificationSaveListenerContainerFactory", concurrency = "2")
   public void listener(ConsumerRecord<String, Object> record) {
@@ -43,7 +43,7 @@ public class NotificationSaver {
       notifications.add(notification);
     }
 
-    notificationRepository.saveAll(notifications);
+    batchNotificationRepository.saveAll(notifications);
     log.info("알림 저장 성공");
   }
 }
