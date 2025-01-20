@@ -8,7 +8,6 @@ import com.halfgallon.withcon.domain.notification.constant.NotificationType;
 import com.halfgallon.withcon.domain.notification.entity.Notification;
 import com.halfgallon.withcon.domain.notification.kafka.dto.ChatRoomNotificationKafkaArrayRequest;
 import com.halfgallon.withcon.domain.notification.repository.JdbcNotificationRepository;
-import com.halfgallon.withcon.domain.notification.repository.impl.BatchNotificationRepository;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
