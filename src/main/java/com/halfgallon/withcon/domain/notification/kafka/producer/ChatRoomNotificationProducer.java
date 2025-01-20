@@ -86,7 +86,7 @@ public class ChatRoomNotificationProducer implements Producer<ChatRoomNotificati
         col++;
 
         // user group 경계선
-        if (col % DIVVALUE == 0) {
+        if (col % DIVVALUE == 0 || col == chatParticipants.size()) {
           ChatRoomNotificationKafkaArrayRequest kafkaArrayRequest
               = ChatRoomNotificationKafkaArrayRequest.builder()
               .members(MEMBERS.get(row))
