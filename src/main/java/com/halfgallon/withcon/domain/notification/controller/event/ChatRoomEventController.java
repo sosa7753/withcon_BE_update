@@ -16,7 +16,7 @@ public class ChatRoomEventController {
   private final GenerateEvent event;
 
   // 채팅방 메시지 발생 event
-  @PostMapping("/notification/event")
+  @PostMapping("/event")
   public ResponseEntity<Void> generateEvent(
       @RequestParam Long chatRoomId) {
 

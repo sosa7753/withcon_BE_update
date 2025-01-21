@@ -1,19 +1,8 @@
 package com.halfgallon.withcon.domain.notification.event.handler;
 
-import com.halfgallon.withcon.domain.member.entity.Member;
-import com.halfgallon.withcon.domain.member.repository.MemberRepository;
-import com.halfgallon.withcon.domain.notification.constant.NotificationMessage;
-import com.halfgallon.withcon.domain.notification.constant.NotificationType;
-import com.halfgallon.withcon.domain.notification.constant.RedisCacheType;
-import com.halfgallon.withcon.domain.notification.constant.VisibleType;
-import com.halfgallon.withcon.domain.notification.dto.NotificationResponse;
-import com.halfgallon.withcon.domain.notification.entity.Notification;
+import com.halfgallon.withcon.domain.notification.dto.ChatMessageNotificationRequest;
 import com.halfgallon.withcon.domain.notification.event.NewMessageEvent;
-import com.halfgallon.withcon.domain.notification.repository.NotificationRepository;
-import com.halfgallon.withcon.domain.notification.service.redis.service.RedisHashService;
-import com.halfgallon.withcon.domain.notification.service.redis.service.RedisNotificationService;
-import java.time.LocalDateTime;
-import java.util.Map;
+import com.halfgallon.withcon.domain.notification.kafka.producer.ChatMessageNotificationProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -24,58 +13,16 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class NewMessageEventHandler {
-
-  private final RedisNotificationService redisNotificationService;
-  private final RedisHashService redisHashService;
-  private final MemberRepository memberRepository;
-  private final NotificationRepository notificationRepository;
+  private final ChatMessageNotificationProducer chatMessageNotificationProducer;
 
   @Async
   @EventListener
   public void handleNewMessageEvent(NewMessageEvent event) {
-    String visibleKey = RedisCacheType.VISIBLE_CACHE.getDescription()
-        + event.getChatRoomId();
-    log.info("Event Handle : 채널 KEY: " + visibleKey);
+    ChatMessageNotificationRequest request =
+        ChatMessageNotificationRequest.builder()
+            .chatRoomId(event.getChatRoomId())
+            .build();
 
-    Map<String, Object> cache = redisHashService.getHashByKey(visibleKey);
-    log.info("Event : Visible 캐시 데이터 조회" + cache);
-
-    if(cache != null) { // 기존 캐시 Map이 존재 한다면
-      for(Map.Entry<String, Object> entry : cache.entrySet()) {
-        VisibleType visibleType = VisibleType.valueOf((String)entry.getValue());
-
-        if(visibleType == VisibleType.HIDDEN) {
-          memberRepository.findById(Long.parseLong(entry.getKey()))
-              .ifPresent(member -> {
-                newMessageSaveAndPublish(event, member);
-                cache.put(entry.getKey(), VisibleType.NONE);
-              });
-        }
-      }
-      redisHashService.saveToHash(visibleKey, cache, 24);
-    }
-  }
-  private void newMessageSaveAndPublish(NewMessageEvent event, Member member) {
-    Notification notification = Notification.builder()
-        .message(createNewMessageNotification())
-        .url(createNewMessageUrl(event.getChatRoomId()))
-        .notificationType(NotificationType.CHATROOM)
-        .createdAt(LocalDateTime.now())
-        .member(member)
-        .build();
-
-    notificationRepository.save(notification);
-    log.info("Event : 알림 저장 성공 ");
-
-    redisNotificationService.publish(String.valueOf(member.getId()), NotificationResponse.from(notification));
-    log.info("Event : 메세지 발행 ");
-  }
-
-  private String createNewMessageUrl(Long chatRoomId) {
-    return NotificationType.CHATROOM.getDescription() + "/" + chatRoomId + "/enter";
-  }
-
-  private String createNewMessageNotification() {
-    return NotificationMessage.NEW_MESSAGE_FROM_CHATROOM.getDescription();
+    chatMessageNotificationProducer.send(request);
   }
 }
