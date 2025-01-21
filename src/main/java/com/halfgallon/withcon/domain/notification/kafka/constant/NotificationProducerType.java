@@ -6,4 +6,6 @@ import lombok.Getter;
 public enum NotificationProducerType {
 
   CHATROOM_USER,
+
+  CHATROOM_MESSAGE
 }
